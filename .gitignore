@@ -1,0 +1,12 @@
+# Build output
+/dist
+/node_modules
+
+# IDE / OS files
+.vscode/
+.DS_Store
+
+# Lockfiles (choose one)
+/yarn.lock
+package-lock.json
+harvardBockchain/
