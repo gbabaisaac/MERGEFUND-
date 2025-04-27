@@ -1,102 +1,128 @@
 // src/components/IssueDetail/IssueDetail.jsx
+
 import React from 'react'
 import {
   Box,
+  Button,
   Typography,
-  Card,
-  CardHeader,
-  CardContent,
-  Avatar,
-  AvatarGroup,
   List,
   ListItem,
   ListItemAvatar,
+  Avatar,
   ListItemText,
-  Button,
   Divider,
-  CardActions
+  IconButton
 } from '@mui/material'
+import ThumbUpIcon   from '@mui/icons-material/ThumbUp'
+import ThumbDownIcon from '@mui/icons-material/ThumbDown'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import ThumbUpIcon from '@mui/icons-material/ThumbUp'
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 
 export default function IssueDetail({ issue, onBack }) {
-  const winner = issue.commits.find(c => c.sha === issue.mergedCommitId)
+  const {
+    number,
+    title,
+    body,
+    created_at,
+    user,
+    html_url,
+    claimers,
+    pendingCommits,
+    bounty,
+    demoClaimers = [],
+    demoCommits = []
+  } = issue
 
   return (
-    <Card sx={{ width: '100%', maxWidth: 600, mx: 'auto', mt: 2 }}>
-      <CardHeader
-        avatar={
-          <Button onClick={onBack} startIcon={<ArrowBackIcon />}>
-            Back
-          </Button>
-        }
-        title={issue.title}
-        subheader={`Repo: ${issue.repo}`}
-      />
+    <Box sx={{ p: 3, overflowY: 'auto' }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={onBack}>
+        Back to Issues
+      </Button>
 
-      <CardContent>
-        <Typography variant="subtitle1" gutterBottom>
-          Bounty: {issue.bounty} ETH
-        </Typography>
+      <Typography variant="h4" sx={{ mt: 2 }}>
+        #{number} – {title}
+      </Typography>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 1 }}
+      >
+        Bounty: {bounty}
+      </Typography>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 2 }}
+      >
+        Opened by {user.login} on{' '}
+        {new Date(created_at).toLocaleDateString()}
+      </Typography>
 
-        {/* Votes & Voters */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <ThumbUpIcon color="action" sx={{ mr: 1 }} />
-          <Typography variant="body2">{issue.votes} votes</Typography>
-          <AvatarGroup max={4} sx={{ ml: 2 }}>
-            {(issue.voters || []).map(v => (
-              <Avatar key={v.login} src={v.avatar_url} />
-            ))}
-          </AvatarGroup>
-        </Box>
+      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
+        {body}
+      </Typography>
 
-        <Divider sx={{ my:2 }} />
+      <Typography variant="h6">
+        Claimers ({claimers || demoClaimers.length})
+      </Typography>
+      <List dense>
+        {demoClaimers.map(c => (
+          <ListItem key={c.login}>
+            <ListItemAvatar>
+              <Avatar src={c.avatar_url}>{c.login[0]}</Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={c.login}
+              secondary={
+                <Button
+                  size="small"
+                  href={c.profile}
+                  target="_blank"
+                >
+                  View Profile
+                </Button>
+              }
+            />
+          </ListItem>
+        ))}
+      </List>
 
-        {/* Commits */}
-        <Typography variant="subtitle1" gutterBottom>
-          Commits
-        </Typography>
-        <List disablePadding>
-          {issue.commits.map(commit => (
-            <React.Fragment key={commit.sha}>
-              <ListItem
-                secondaryAction={
-                  commit.sha === issue.mergedCommitId && (
-                    <EmojiEventsIcon sx={{ color: '#FFD700' }} />
-                  )
-                }
-              >
-                <ListItemAvatar>
-                  <Avatar src={commit.avatar_url}>
-                    {commit.author[0].toUpperCase()}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={commit.sha}
-                  secondary={`Author: ${commit.author}`}
-                />
-              </ListItem>
-              <Divider component="li" />
-            </React.Fragment>
-          ))}
-        </List>
+      <Divider sx={{ my: 2 }} />
 
-        {/* Winner Badge */}
-        {winner && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-            <EmojiEventsIcon sx={{ color: '#FFD700', mr: 1 }} />
-            <Typography variant="body1">
-              Winner: {winner.author} ({winner.sha})
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
+      <Typography variant="h6">
+        Pending Commits ({pendingCommits || demoCommits.length})
+      </Typography>
+      <List>
+        {demoCommits.map(c => (
+          <ListItem key={c.sha} alignItems="flex-start">
+            <ListItemAvatar>
+              <Avatar src={c.author.avatar_url}>
+                {c.author.login[0]}
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={c.message}
+              secondary={`by ${c.author.login}`}
+            />
+            <IconButton size="small">
+              <ThumbUpIcon fontSize="small" /> {c.voteUp}
+            </IconButton>
+            <IconButton size="small">
+              <ThumbDownIcon fontSize="small" /> {c.voteDown}
+            </IconButton>
+          </ListItem>
+        ))}
+      </List>
 
-      <CardActions>
-        <Button disabled> 👍 Upvote </Button>
-        <Button disabled> 👎 Downvote </Button>
-      </CardActions>
-    </Card>
+      <Box mt={3}>
+        <Button
+          variant="contained"
+          href={html_url}
+          target="_blank"
+          rel="noopener"
+        >
+          View on GitHub
+        </Button>
+      </Box>
+    </Box>
   )
 }

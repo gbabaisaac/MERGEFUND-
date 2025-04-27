@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useState, useEffect } from 'react'
 import {
   ThemeProvider,
@@ -18,26 +19,26 @@ import theme          from './theme'
 import NavBar         from './components/NavBar/NavBar'
 import Main           from './components/Main/Main'
 import Dashboard      from './components/NavBar/Dashboard/Dashboard'
+import IssueDetail    from './components/IssueDetail/IssueDetail'
 import Donate         from './components/NavBar/Donate/Donate'
 import RequestFeature from './components/NavBar/RequestFeature/RequestFeature'
 import Leaderboard    from './components/NavBar/Leaderboard/Leaderboard'
 import Profile        from './components/NavBar/profile/Profile'
 import EarningsPopup  from './components/NavBar/Dashboard/EarningsPopup'
-import IssueDetail    from './components/IssueDetail/IssueDetail'
 
 export default function App() {
-  const [navOpen,      setNavOpen]       = useState(true)
-  const [activeTab,    setActiveTab]     = useState('main')
-  const [owner,        setOwner]         = useState(null)
-  const [repo,         setRepo]          = useState(null)
-  const [search,       setSearch]        = useState('')
-  const [selectedIssue,setSelectedIssue] = useState(null)
-  const [viewingIssue, setViewingIssue]  = useState(null)
-  const [earnOpen,     setEarnOpen]      = useState(false)
-  const [notifyEnabled,setNotifyEnabled] = useState(false)
-  const [profileUser,  setProfileUser]   = useState(null)
+  const [navOpen,       setNavOpen]       = useState(true)
+  const [activeTab,     setActiveTab]     = useState('main')
+  const [owner,         setOwner]         = useState(null)
+  const [repo,          setRepo]          = useState(null)
+  const [search,        setSearch]        = useState('')
+  const [viewingIssue,  setViewingIssue]  = useState(null)
+  const [selectedIssue, setSelectedIssue] = useState(null)
+  const [earnOpen,      setEarnOpen]      = useState(false)
+  const [notifyEnabled, setNotifyEnabled] = useState(false)
+  const [profileUser,   setProfileUser]   = useState(null)
 
-  // auto‐detect GitHub tab repo + notification pref
+  // Auto-detect GitHub tab repo + notification pref
   useEffect(() => {
     setNotifyEnabled(localStorage.getItem('mergefund-notifications') === 'true')
     if (chrome?.tabs?.query) {
@@ -51,7 +52,7 @@ export default function App() {
     }
   }, [])
 
-  // global owner/repo search
+  // Search owner/repo
   const handleSearch = async e => {
     if (e.key === 'Enter' && search.includes('/')) {
       const [o, r] = search.trim().split('/')
@@ -67,6 +68,7 @@ export default function App() {
     }
   }
 
+  // When nav item clicked, reset sub‐views
   const handleNav = key => {
     setActiveTab(key)
     setViewingIssue(null)
@@ -123,35 +125,42 @@ export default function App() {
             </Toolbar>
           </AppBar>
 
+          {/* MAIN */}
           {activeTab === 'main' && <Main />}
 
-          {!viewingIssue && activeTab === 'dashboard' && (
+          {/* DASHBOARD */}
+          {activeTab === 'dashboard' && !viewingIssue && (
             <Dashboard
               owner={owner}
               repo={repo}
-              onClaim={issue => setViewingIssue(issue)}
+              onView={issue => setViewingIssue(issue)}
+              onClaim={issue => {
+                setSelectedIssue(issue)
+                setActiveTab('donate')
+              }}
             />
           )}
 
-          {viewingIssue && (
+          {/* ISSUE DETAIL */}
+          {activeTab === 'dashboard' && viewingIssue && (
             <IssueDetail
-              owner={owner}
-              repo={repo}
               issue={viewingIssue}
               onBack={() => setViewingIssue(null)}
             />
           )}
 
+          {/* DONATE */}
           {activeTab === 'donate' && (
             <Donate
               owner={owner}
               repo={repo}
               issue={selectedIssue}
-              onBack={() => setActiveTab('dashboard')}
+              onBack={() => handleNav('dashboard')}
               onDonateComplete={() => notifyEnabled && setEarnOpen(true)}
             />
           )}
 
+          {/* REQUEST FEATURE */}
           {activeTab === 'request' && (
             <RequestFeature
               owner={owner}
@@ -160,6 +169,7 @@ export default function App() {
             />
           )}
 
+          {/* LEADERBOARD */}
           {activeTab === 'leaderboard' && (
             <Leaderboard
               onViewUser={login => {
@@ -169,12 +179,12 @@ export default function App() {
             />
           )}
 
+          {/* PROFILE */}
           {activeTab === 'profile' && (
             <Profile
               userLogin={profileUser}
               onBack={() => handleNav('leaderboard')}
-              onDetail={issue => {
-                // reuse the same detail flow
+              onViewClaimed={issue => {
                 setViewingIssue(issue)
                 setActiveTab('dashboard')
               }}

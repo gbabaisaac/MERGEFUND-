@@ -1,125 +1,171 @@
 // src/components/NavBar/Dashboard/Dashboard.jsx
+
 import React, { useState, useEffect } from 'react'
 import {
   Box,
-  Typography,
   Grid,
   Card,
   CardContent,
   CardActions,
-  Button
+  Typography,
+  Button,
+  CircularProgress,
+  Chip
 } from '@mui/material'
 
-/** Your demo issues always shown first */
-const dummyIssues = [
-  {
-    id: 1,
-    title: 'Fix login bug',
-    priority: 'High',
-    bounty: 1.2,
-    claimers: ['alice','bob'],
-    commits: [
-      { id: 'c1', author: 'alice', sha: 'abc123' },
-      { id: 'c2', author: 'bob',   sha: 'def456' }
-    ]
-  },
-  {
-    id: 2,
-    title: 'Add dark mode',
-    priority: 'Medium',
-    bounty: 0.8,
-    claimers: ['carol'],
-    commits: []
-  }
-]
+export default function Dashboard({ owner, repo, onView, onClaim }) {
+  const [issues, setIssues]   = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState(null)
 
-export default function Dashboard({ owner, repo, onClaim }) {
-  const [apiIssues, setApiIssues] = useState([])
-  const [loading,   setLoading]   = useState(false)
-  const token = localStorage.getItem('githubToken')
+  // Helper to generate a random integer between min and max (inclusive)
+  const randomInt = (min, max) =>
+    Math.floor(Math.random() * (max - min + 1)) + min
 
   useEffect(() => {
-    if (!owner || !repo) return
+    if (!owner || !repo) {
+      setIssues([])
+      return
+    }
+
     setLoading(true)
-    fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=open&per_page=50`, {
-      headers: token ? { Authorization: `token ${token}` } : {}
-    })
-      .then(res => res.json())
-      .then(data => {
-        // filter out PRs and map to our shape
-        const filtered = (data || [])
-          .filter(i => !i.pull_request)
-          .map(i => ({
-            id: i.number,
-            title: i.title,
-            priority: 'Low',       // default
-            bounty: 0,             // no on‐chain bounty yet
-            claimers: [],          // nothing claimed
-            commits: []            // no commit history tracked
-          }))
-        setApiIssues(filtered)
+    setError(null)
+
+    fetch(`https://api.github.com/repos/${owner}/${repo}/issues`)
+      .then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text()
+          throw new Error(`GitHub API ${res.status}: ${text}`)
+        }
+        return res.json()
       })
-      .catch(() => {
-        // swallow errors for demo
+      .then((data) => {
+        // Filter out PRs and then decorate each issue with dummy demo fields
+        const onlyIssues = data
+          .filter((i) => !i.pull_request)
+          .map((issue) => ({
+            ...issue,
+            bounty: `${randomInt(50, 500)} DEV`,
+            claimers: randomInt(0, 10),
+            pendingCommits: randomInt(0, 5)
+          }))
+
+        setIssues(onlyIssues)
+      })
+      .catch((err) => {
+        console.error(err)
+        setError(err.message)
+        setIssues([]) // or leave empty
       })
       .finally(() => setLoading(false))
-  }, [owner, repo, token])
+  }, [owner, repo])
 
-  // always show dummy first, then real ones
-  const issues = [...dummyIssues, ...apiIssues]
+  if (!owner || !repo) {
+    return (
+      <Box p={3}>
+        <Typography color="text.secondary">
+          No repository selected.
+        </Typography>
+      </Box>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Box
+        p={3}
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100%"
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Typography color="error">
+          Error loading issues: {error}
+        </Typography>
+      </Box>
+    )
+  }
 
   return (
-    <Box sx={{ p: 3, overflowY: 'auto' }}>
-      <Typography variant="h6" gutterBottom color="text.primary">
-        Issues in {owner}/{repo}
-      </Typography>
-
-      {loading && (
-        <Typography color="text.secondary" sx={{ mb: 2 }}>
-          Loading issues…
-        </Typography>
-      )}
-
+    <Box p={3} sx={{ overflowY: 'auto', flex: 1 }}>
       <Grid container spacing={2}>
-        {issues.map(issue => (
-          <Grid item xs={12} md={6} key={issue.id + '-' + issue.title}>
+        {issues.map((issue) => (
+          <Grid item xs={12} sm={6} md={4} key={issue.id}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle1" color="text.primary">
-                  {issue.title}
+                <Typography variant="subtitle1" gutterBottom>
+                  #{issue.number} – {issue.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Priority: {issue.priority} • Bounty: {issue.bounty} ETH
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {issue.body || '— no description provided —'}
                 </Typography>
+
+                {/* DevCoin bounty badge */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mt: 2
+                  }}
+                >
+                  <Chip
+                    label={issue.bounty}
+                    color="secondary"
+                    size="small"
+                    sx={{
+                      fontWeight: 'bold',
+                      '@keyframes pulse': {
+                        '0%': { transform: 'scale(1)' },
+                        '50%': { transform: 'scale(1.1)' },
+                        '100%': { transform: 'scale(1)' }
+                      },
+                      animation: 'pulse 1.5s infinite'
+                    }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    Claimers: {issue.claimers} | Pending: {issue.pendingCommits}
+                  </Typography>
+                </Box>
               </CardContent>
+
               <CardActions>
+                <Button size="small" onClick={() => onView(issue)}>
+                  View
+                </Button>
                 <Button size="small" onClick={() => onClaim(issue)}>
-                  View/Claim
+                  Claim
                 </Button>
                 <Button
                   size="small"
-                  disabled={!token}
-                  onClick={() => {
-                    const key = `${owner}/${repo}`
-                    const saved = JSON.parse(localStorage.getItem('claimedIssues') || '{}')
-                    saved[key] = Array.from(new Set([...(saved[key]||[]), issue.id]))
-                    localStorage.setItem('claimedIssues', JSON.stringify(saved))
-                    alert('Issue claimed!')
-                  }}
+                  href={issue.html_url}
+                  target="_blank"
+                  rel="noopener"
                 >
-                  Claim
+                  GitHub
                 </Button>
               </CardActions>
             </Card>
           </Grid>
         ))}
       </Grid>
-
-      {issues.length === 0 && !loading && (
-        <Typography color="text.secondary" sx={{ mt: 2 }}>
-          No open issues found.
-        </Typography>
-      )}
     </Box>
   )
 }
