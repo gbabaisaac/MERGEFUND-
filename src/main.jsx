@@ -3,11 +3,13 @@ import { createRoot } from 'react-dom/client'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import App from './App'
 
+
 const theme = createTheme({
   palette: {
-    mode: 'light',
-    primary: { main: '#1976d2' },
-    background: { default: '#f5f5f5' }
+    mode: 'dark',
+    background: { default: '#121212', paper: '#1E1E1E' },
+    primary: { main: '#7C4DFF' },
+    secondary: { main: '#03DAC6' },
   }
 })
 

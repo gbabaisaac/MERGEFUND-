@@ -7,16 +7,16 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.0.2",
+    "@mui/material": "^7.0.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@mui/material": "^5.x",
-    "@emotion/react": "^11.x",
-    "@emotion/styled": "^11.x",
-    "@mui/icons-material": "^5.x"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "vite": "^4.x",
+    "@crxjs/vite-plugin": "^1.x",
     "@vitejs/plugin-react": "^4.x",
-    "@crxjs/vite-plugin": "^1.x"
+    "vite": "^4.x"
   }
 }
