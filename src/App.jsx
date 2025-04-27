@@ -13,7 +13,7 @@ import {
   Button
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
-import NavBar from './components/NavBar'
+import NavBar from './components/NavBar/NavBar'
 
 export default function App() {
   // 1) Sidebar open/closed & which tab is active
