@@ -11,19 +11,23 @@ import {
   Divider,
   Chip
 } from '@mui/material'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import FolderOpenIcon from '@mui/icons-material/FolderOpen'
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
-import GitHubIcon from '@mui/icons-material/GitHub'
+import HomeIcon           from '@mui/icons-material/Home'
+import DashboardIcon      from '@mui/icons-material/Dashboard'
+import LightbulbIcon      from '@mui/icons-material/Lightbulb'
+import AttachMoneyIcon    from '@mui/icons-material/AttachMoney'
+import EmojiEventsIcon    from '@mui/icons-material/EmojiEvents'
+import AccountCircleIcon  from '@mui/icons-material/AccountCircle'
+import GitHubIcon         from '@mui/icons-material/GitHub'
 
 const DRAWER_WIDTH = 200
 
 const navItems = [
-  { key: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-  { key: 'projects',  label: 'Projects',   icon: <FolderOpenIcon /> },
-  { key: 'donate',    label: 'Donate',     icon: <AttachMoneyIcon /> },
-  { key: 'profile',   label: 'Profile',    icon: <AccountCircleIcon /> }
+  { key: 'main',        label: 'Home',           icon: <HomeIcon /> },
+  { key: 'dashboard',   label: 'Dashboard',      icon: <DashboardIcon /> },
+  { key: 'request',     label: 'Request Feature',icon: <LightbulbIcon /> },
+  { key: 'donate',      label: 'Donate',         icon: <AttachMoneyIcon /> },
+  { key: 'leaderboard', label: 'Leaderboard',    icon: <EmojiEventsIcon /> },
+  { key: 'profile',     label: 'Profile',        icon: <AccountCircleIcon /> }
 ]
 
 export default function NavBar({ open, active, onNavClick }) {
@@ -90,7 +94,6 @@ export default function NavBar({ open, active, onNavClick }) {
       <Typography variant="subtitle2" sx={{ mb: 1, color: '#888' }}>
         FILTERS
       </Typography>
-
       <Typography variant="caption">Categories</Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         {['Web', 'Mobile', 'AI'].map(cat => (

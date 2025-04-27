@@ -1,158 +1,194 @@
-// src/App.jsx
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
+  ThemeProvider,
+  CssBaseline,
   Box,
-  IconButton,
   AppBar,
   Toolbar,
+  IconButton,
   Typography,
   TextField,
-  Grid,
-  Card,
-  CardContent,
-  Button
+  InputAdornment
 } from '@mui/material'
-import MenuIcon from '@mui/icons-material/Menu'
+import MenuIcon       from '@mui/icons-material/Menu'
+import SearchIcon     from '@mui/icons-material/Search'
+import MonetizationOn from '@mui/icons-material/MonetizationOn'
 
-// NavBar now lives here:
-import NavBar from './components/NavBar/NavBar'
-// Donate lives inside NavBar/Donate:
-import Donate from './components/NavBar/Donate/Donate'
+import theme          from './theme'
+import NavBar         from './components/NavBar/NavBar'
+import Main           from './components/Main/Main'
+import Dashboard      from './components/NavBar/Dashboard/Dashboard'
+import Donate         from './components/NavBar/Donate/Donate'
+import RequestFeature from './components/NavBar/RequestFeature/RequestFeature'
+import Leaderboard    from './components/NavBar/Leaderboard/Leaderboard'
+import Profile        from './components/NavBar/profile/Profile'
+import EarningsPopup  from './components/NavBar/Dashboard/EarningsPopup'
+import IssueDetail    from './components/IssueDetail/IssueDetail'
 
 export default function App() {
-  const [navOpen, setNavOpen]     = useState(true)
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [navOpen,      setNavOpen]       = useState(true)
+  const [activeTab,    setActiveTab]     = useState('main')
+  const [owner,        setOwner]         = useState(null)
+  const [repo,         setRepo]          = useState(null)
+  const [search,       setSearch]        = useState('')
+  const [selectedIssue,setSelectedIssue] = useState(null)
+  const [viewingIssue, setViewingIssue]  = useState(null)
+  const [earnOpen,     setEarnOpen]      = useState(false)
+  const [notifyEnabled,setNotifyEnabled] = useState(false)
+  const [profileUser,  setProfileUser]   = useState(null)
 
-  const [owner,   setOwner]   = useState(null)
-  const [repo,    setRepo]    = useState(null)
-  const [commits, setCommits] = useState([])
-  const [filterText, setFilterText] = useState('')
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-
-  // Detect GitHub repo from the current tab
+  // auto‐detect GitHub tab repo + notification pref
   useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-      const m = tab?.url?.match(/github\.com\/([^\/]+)\/([^\/#?]+)/)
-      if (m) {
-        setOwner(m[1])
-        setRepo(m[2])
-      }
-    })
+    setNotifyEnabled(localStorage.getItem('mergefund-notifications') === 'true')
+    if (chrome?.tabs?.query) {
+      chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+        const m = tab.url?.match(/github\.com\/([^\/]+)\/([^\/#?]+)/)
+        if (m) {
+          setOwner(m[1])
+          setRepo(m[2])
+        }
+      })
+    }
   }, [])
 
-  // Fetch commits
-  const fetchCommits = useCallback(async () => {
-    if (!owner || !repo || !hasMore) return
-    const perPage = 20
-    const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${perPage}&page=${page}`
-    )
-    if (!res.ok) return setHasMore(false)
-    const data = await res.json()
-    if (data.length < perPage) setHasMore(false)
-    setCommits(prev => [...prev, ...data])
-  }, [owner, repo, page, hasMore])
+  // global owner/repo search
+  const handleSearch = async e => {
+    if (e.key === 'Enter' && search.includes('/')) {
+      const [o, r] = search.trim().split('/')
+      try {
+        const res = await fetch(`https://api.github.com/repos/${o}/${r}`)
+        if (!res.ok) throw new Error()
+        setOwner(o)
+        setRepo(r)
+        setActiveTab('dashboard')
+      } catch {
+        alert('Repository not found—check owner/repo spelling.')
+      }
+    }
+  }
 
-  useEffect(() => {
-    fetchCommits()
-  }, [fetchCommits])
-
-  const filtered = commits.filter(c =>
-    c.commit.message.toLowerCase().includes(filterText.toLowerCase())
-  )
+  const handleNav = key => {
+    setActiveTab(key)
+    setViewingIssue(null)
+    setSelectedIssue(null)
+    setProfileUser(null)
+  }
 
   return (
-    <Box sx={{ display: 'flex', width: '100%', height: '100vh' }}>
-      <NavBar
-        open={navOpen}
-        active={activeTab}
-        onNavClick={setActiveTab}
-      />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ display: 'flex', height: '100vh' }}>
+        <NavBar open={navOpen} active={activeTab} onNavClick={handleNav} />
 
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <AppBar position="static" elevation={0} sx={{ bgcolor: '#121212' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={() => setNavOpen(o => !o)}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" sx={{ flexGrow: 1 }}>
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-            </Typography>
-          </Toolbar>
-        </AppBar>
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: 'background.default'
+          }}
+        >
+          <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper' }}>
+            <Toolbar>
+              <IconButton edge="start" onClick={() => setNavOpen(o => !o)} sx={{ mr: 2 }}>
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" sx={{ flexGrow: 1, color: 'text.primary' }}>
+                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </Typography>
 
-        {activeTab === 'donate' ? (
-          <Donate repo={owner && repo ? `${owner}/${repo}` : '—/—'} />
-        ) : (
-          <>
-            <Box sx={{ p: 1, bgcolor: '#1E1E1E' }}>
               <TextField
-                fullWidth
-                size="small"
+                placeholder="owner/repo"
                 variant="filled"
-                placeholder="Filter commits…"
-                value={filterText}
-                onChange={e => setFilterText(e.target.value)}
-                InputProps={{ sx: { bgcolor: '#262626', color: '#fff' } }}
+                size="small"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={handleSearch}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                  disableUnderline: true,
+                  sx: { bgcolor: 'background.paper', borderRadius: 1, width: 200 }
+                }}
               />
-            </Box>
 
-            <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: '#121212' }}>
-              <Grid container spacing={2}>
-                {filtered.map(c => (
-                  <Grid item xs={12} key={c.sha}>
-                    <Card
-                      sx={{
-                        bgcolor: '#1E1E1E',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        '&:hover': { boxShadow: 6 }
-                      }}
-                      onClick={() => chrome.tabs.create({ url: c.html_url })}
-                    >
-                      <CardContent>
-                        <Typography variant="subtitle1">
-                          {c.commit.message.split('\n')[0]}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          {new Date(c.commit.author.date).toLocaleString()} by{' '}
-                          {c.commit.author.name}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
+              {activeTab === 'dashboard' && (
+                <IconButton onClick={() => setEarnOpen(true)} sx={{ ml: 1 }}>
+                  <MonetizationOn />
+                </IconButton>
+              )}
+            </Toolbar>
+          </AppBar>
 
-              {hasMore && (
-                <Box sx={{ textAlign: 'center', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    sx={{ color: '#fff', borderColor: '#444' }}
-                    onClick={() => setPage(p => p + 1)}
-                  >
-                    Load More
-                  </Button>
-                </Box>
-              )}
-              {!hasMore && commits.length > 0 && (
-                <Typography align="center" sx={{ mt: 2, color: '#555' }}>
-                  No more commits
-                </Typography>
-              )}
-            </Box>
-          </>
-        )}
+          {activeTab === 'main' && <Main />}
+
+          {!viewingIssue && activeTab === 'dashboard' && (
+            <Dashboard
+              owner={owner}
+              repo={repo}
+              onClaim={issue => setViewingIssue(issue)}
+            />
+          )}
+
+          {viewingIssue && (
+            <IssueDetail
+              owner={owner}
+              repo={repo}
+              issue={viewingIssue}
+              onBack={() => setViewingIssue(null)}
+            />
+          )}
+
+          {activeTab === 'donate' && (
+            <Donate
+              owner={owner}
+              repo={repo}
+              issue={selectedIssue}
+              onBack={() => setActiveTab('dashboard')}
+              onDonateComplete={() => notifyEnabled && setEarnOpen(true)}
+            />
+          )}
+
+          {activeTab === 'request' && (
+            <RequestFeature
+              owner={owner}
+              repo={repo}
+              onBack={() => handleNav('dashboard')}
+            />
+          )}
+
+          {activeTab === 'leaderboard' && (
+            <Leaderboard
+              onViewUser={login => {
+                setProfileUser(login)
+                setActiveTab('profile')
+              }}
+            />
+          )}
+
+          {activeTab === 'profile' && (
+            <Profile
+              userLogin={profileUser}
+              onBack={() => handleNav('leaderboard')}
+              onDetail={issue => {
+                // reuse the same detail flow
+                setViewingIssue(issue)
+                setActiveTab('dashboard')
+              }}
+            />
+          )}
+        </Box>
+
+        <EarningsPopup
+          open={earnOpen}
+          onClose={() => setEarnOpen(false)}
+          owner={owner}
+          repo={repo}
+        />
       </Box>
-    </Box>
+    </ThemeProvider>
   )
 }
