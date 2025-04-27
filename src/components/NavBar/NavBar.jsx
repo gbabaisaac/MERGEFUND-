@@ -1,4 +1,4 @@
-// src/components/NavBar.jsx
+// src/components/NavBar/NavBar.jsx
 import React from 'react'
 import {
   Box,
@@ -14,14 +14,16 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import GitHubIcon from '@mui/icons-material/GitHub'
 
 const DRAWER_WIDTH = 200
 
 const navItems = [
   { key: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-  { key: 'projects',  label: 'Projects',  icon: <FolderOpenIcon /> },
-  { key: 'profile',   label: 'Profile',   icon: <AccountCircleIcon /> }
+  { key: 'projects',  label: 'Projects',   icon: <FolderOpenIcon /> },
+  { key: 'donate',    label: 'Donate',     icon: <AttachMoneyIcon /> },
+  { key: 'profile',   label: 'Profile',    icon: <AccountCircleIcon /> }
 ]
 
 export default function NavBar({ open, active, onNavClick }) {
@@ -45,7 +47,6 @@ export default function NavBar({ open, active, onNavClick }) {
         }
       }}
     >
-      {/* Logo / Title */}
       <Box sx={{ mb: 4, textAlign: 'center' }}>
         <GitHubIcon sx={{ fontSize: 32, color: '#7C4DFF' }} />
         <Typography variant="h6" sx={{ mt: 1 }}>
@@ -53,7 +54,6 @@ export default function NavBar({ open, active, onNavClick }) {
         </Typography>
       </Box>
 
-      {/* Navigation Links */}
       <List>
         {navItems.map(item => (
           <ListItemButton
@@ -87,50 +87,28 @@ export default function NavBar({ open, active, onNavClick }) {
 
       <Divider sx={{ my: 2, borderColor: '#333' }} />
 
-      {/* Filters Section */}
       <Typography variant="subtitle2" sx={{ mb: 1, color: '#888' }}>
         FILTERS
       </Typography>
 
-      <Typography variant="caption" sx={{ mb: 1 }}>
-        Categories
-      </Typography>
+      <Typography variant="caption">Categories</Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         {['Web', 'Mobile', 'AI'].map(cat => (
-          <Chip
-            key={cat}
-            label={cat}
-            size="small"
-            sx={{ bgcolor: '#262626', color: '#fff' }}
-          />
+          <Chip key={cat} label={cat} size="small" sx={{ bgcolor: '#262626', color: '#fff' }} />
         ))}
       </Box>
 
-      <Typography variant="caption" sx={{ mb: 1 }}>
-        Languages
-      </Typography>
+      <Typography variant="caption">Languages</Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         {['JavaScript', 'Python'].map(lang => (
-          <Chip
-            key={lang}
-            label={lang}
-            size="small"
-            sx={{ bgcolor: '#262626', color: '#fff' }}
-          />
+          <Chip key={lang} label={lang} size="small" sx={{ bgcolor: '#262626', color: '#fff' }} />
         ))}
       </Box>
 
-      <Typography variant="caption" sx={{ mb: 1 }}>
-        Donation
-      </Typography>
+      <Typography variant="caption">Donation</Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         {["> $1,000", "Any"].map(d => (
-          <Chip
-            key={d}
-            label={d}
-            size="small"
-            sx={{ bgcolor: '#262626', color: '#fff' }}
-          />
+          <Chip key={d} label={d} size="small" sx={{ bgcolor: '#262626', color: '#fff' }} />
         ))}
       </Box>
     </Drawer>
